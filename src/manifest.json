@@ -40,7 +40,6 @@
         {
             "botId": "b180f85a-37ab-4a62-a972-e5d7c8899935",
             "scopes": [
-                "personal",
                 "team"
             ],
             "commands": [

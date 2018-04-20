@@ -34,8 +34,9 @@ module.exports.setup = function (app) {
     // Setup an invoke handler
     // TODO: cant figure out a way to access session
     connector.onInvoke((message, callback) => {
+        console.log('=======invoke======\n', message);
         attendanceManager.onInvoke(connector, bot, message);
-        callback(null, { result: "success" }, 200);
+        callback(null, null, 200);
     })
 
     // Export the connector for any downstream integration - e.g. registering a messaging extension
