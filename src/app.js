@@ -2,6 +2,7 @@
 
 var express = require('express');
 var app = express();
+var models = require('../models')
 
 // Adding tabs to our app. This will setup routes to various views
 var tabs = require('./tabs');
@@ -15,7 +16,11 @@ bot.setup(app);
 var messagingExtension = require('./messaging-extension');
 messagingExtension.setup();
 
-// Start our nodejs app
-app.listen(process.env.PORT || 3333, function() {
-    console.log('App started listening on port 3333');
+// database integration
+models.sequelize.sync().then(function () {
+    // Start our nodejs app
+    var port = process.env.PORT || 3333;
+    app.listen(port, function () {
+        console.log('App started listening on port ' + port);
+    });
 });

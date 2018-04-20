@@ -23,7 +23,7 @@ module.exports.setup = function (app) {
         if (text.includes('start attendance call')) {
             attendanceManager.handleAttendanceCall(session, text);
         } else {
-            session.send('You said: %s', text);
+            session.send('Didn\'t quite get that\nTry one of these\n%s', attendanceManager.getSupportedCommands().join("\n"));
         }
     });
 
@@ -34,7 +34,7 @@ module.exports.setup = function (app) {
     // Setup an invoke handler
     // TODO: cant figure out a way to access session
     connector.onInvoke((message, callback) => {
-        console.log('=======invoke======\n', message);
+        //console.log('=======invoke======\n', message);
         attendanceManager.onInvoke(connector, bot, message);
         callback(null, null, 200);
     })

@@ -1,6 +1,9 @@
 module.exports = {
     bot: null,
     connector: null,
+    getSupportedCommands: function () {
+        return ['start attendance call'];
+    },
     handleAttendanceCall: function (session, text) {
         var now = new Date();
         var msg = this.getAttendanceCardMessage(session, now, 0);
