@@ -20,7 +20,6 @@ module.exports.setup = function (app) {
     var bot = new builder.UniversalBot(connector, function (session) {
         // Message might contain @mentions which we would like to strip off in the response
         var text = teams.TeamsMessage.getTextWithoutMentions(session.message);
-        console.log(session.message);
         if (text.includes('start attendance call')) {
             attendanceManager.handleAttendanceCall(session, text);
         } else {
@@ -31,6 +30,13 @@ module.exports.setup = function (app) {
     // Setup an endpoint on the router for the bot to listen.
     // NOTE: This endpoint cannot be changed and must be api/messages
     app.post('/api/messages', connector.listen());
+
+    // Setup an invoke handler
+    // TODO: cant figure out a way to access session
+    connector.onInvoke((message, callback) => {
+        attendanceManager.onInvoke(connector, bot, message);
+        callback(null, { result: "success" }, 200);
+    })
 
     // Export the connector for any downstream integration - e.g. registering a messaging extension
     module.exports.connector = connector;

@@ -45,7 +45,7 @@
             ],
             "commands": [
                 {
-                    "id": "getAttendance",
+                    "id": "startAttendance",
                     "description": "Gets attendance status for a class",
                     "title": "Get attendance for class",
                     "initialRun": true,
