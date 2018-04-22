@@ -6,13 +6,15 @@ module.exports = (sequelize, DataTypes) => {
         user_name: DataTypes.STRING,
         lat: DataTypes.DECIMAL,
         lng: DataTypes.DECIMAL,
-        updated_time: DataTypes.BIGINT
-    });
+    }, {
+            tableName: 'attendance_log'
+        });
 
     AttendanceLog.associate = function (models) {
         models.AttendanceLog.belongsTo(models.AttendanceDay, {
             onDelete: "CASCADE",
             foreignKey: {
+                name: 'attendance_day_id',
                 allowNull: false
             }
         });

@@ -23,7 +23,7 @@ module.exports.setup = function (app) {
         if (text.includes('start attendance call')) {
             attendanceManager.handleAttendanceCall(session, text);
         } else {
-            session.send('Didn\'t quite get that\nTry one of these\n%s', attendanceManager.getSupportedCommands().join("\n"));
+            session.send('Yeh humse na ho paaega :P\nTry one of these\n%s', attendanceManager.getSupportedCommands().join("\n"));
         }
     });
 

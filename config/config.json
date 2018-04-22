@@ -5,7 +5,8 @@
     "database": "database_development",
     "host": "127.0.0.1",
     "dialect": "sqlite",
-    "storage": "data/dev.db"
+    "storage": "data/dev.db",
+    "logging": false
   },
   "production": {
     "username": "root",
@@ -13,6 +14,7 @@
     "database": "database_production",
     "host": "127.0.0.1",
     "dialect": "sqlite",
-    "storage": "data/prod.db"
+    "storage": "data/prod.db",
+    "logging": false
   }
 }

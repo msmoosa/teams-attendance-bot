@@ -1,14 +1,26 @@
+const storageManager = require('./storageManager')
+const dateFormat = require('dateformat')
+const resources = require('./resources')
+
 module.exports = {
     bot: null,
     connector: null,
     getSupportedCommands: function () {
         return ['start attendance call'];
     },
-    handleAttendanceCall: function (session, text) {
+    handleAttendanceCall: async function (session, text) {
         var now = new Date();
+        var attendanceDay = await storageManager.storeAttendanceDay(dateFormat(now, 'isoDate'), session.message)
+            .catch((err) => { /* ignore error */ });;
+
+        if (!attendanceDay) {
+            session.send(resources.attendanceStartedAlready);
+            return;
+        }
+
         var msg = this.getAttendanceCardMessage(session, now, 0);
         session.send(msg).sendBatch((err, addresses) => {
-            console.log(addresses[0]);
+            storageManager.updateAttendanceDay(attendanceDay.id, addresses[0].id)
         });
     },
     onInvoke: function (connector, bot, message) {
@@ -21,32 +33,35 @@ module.exports = {
             console.error('Unknown action ' + action);
         }
     },
-    markAttendance: function (message) {
-        var userId = message.address.user.aadObjectId;
-        var name = message.address.user.name;
-        var lat = message.value.lat;
-        var lng = message.value.lng;
-        var date = message.value.date;
+    markAttendance: async function (message) {
+        var attendanceInfo = {
+            userId: message.address.user.aadObjectId,
+            channelId: message.sourceEvent.channel.id,
+            name: message.address.user.name,
+            lat: message.value.lat,
+            lng: message.value.lng,
+            date: message.value.date
+        }
 
         // store information
-        console.log('Marked attendance for ' + name + ' for ' + date);
-
+        var attendanceLog = await storageManager.storeAttendanceLog(attendanceInfo).catch((err) => console.log('attendancelog storage failed', err))
+        var activityId = await storageManager.getActivityId(attendanceInfo.date, attendanceInfo.channelId, attendanceLog)
         // update card
-        this.sendCardUpdate(message);
+        this.sendCardUpdate(message, activityId, attendanceLog);
     },
-    sendCardUpdate: async function (invokeMessage) {
+    sendCardUpdate: async function (invokeMessage, activityId, attendanceLog) {
         // retrieve current total
-        var totalAttendees = 1;
+        var totalAttendees = await storageManager.getTotalAttendeesCount(attendanceLog.attendance_day_id);
 
         // recreate message
         let session = await this.loadSessionAsync(invokeMessage);
         var updatedMessage = this.getAttendanceCardMessage(session, new Date(invokeMessage.value.date), totalAttendees);
         var address = invokeMessage.address;
-        address.id = '1:1BkCQnzHd2cDAnfbRjGVleYm7be4b5wUh6FUZyzDaAV4';
+        address.id = activityId;
         updatedMessage.address(address);
         // send update
         session.connector.update(updatedMessage.toMessage(), (err, data) => {
-            console.log(err, data)
+            console.log('[UpdateCard] Updated at ' + new Date())
         });
     },
     loadSessionAsync: function (event) {
@@ -80,6 +95,7 @@ module.exports = {
                         type: 'invoke',
                         value: JSON.stringify({
                             action: "markAttendance",
+                            extras: ["location"],
                             date: dateFormat(date, 'isoDate'),
                             lat: 28,
                             lng: 77

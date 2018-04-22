@@ -12,15 +12,18 @@ tabs.setup(app);
 var bot = require('./bot');
 bot.setup(app);
 
+var debug = require('./debug')
+debug.setup(app);
+
 // Adding a messaging extension to our app
 var messagingExtension = require('./messaging-extension');
 messagingExtension.setup();
 
 // database integration
-models.sequelize.sync().then(function () {
+models.sequelize.sync({ /*force: true*/ }).then(function () {
     // Start our nodejs app
     var port = process.env.PORT || 3333;
     app.listen(port, function () {
-        console.log('App started listening on port ' + port);
+        console.log('App started listening on port ' + port + ' at ' + new Date());
     });
 });
