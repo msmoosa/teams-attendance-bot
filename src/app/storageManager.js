@@ -72,6 +72,39 @@ module.exports = {
             });
         })
     },
+    findAttendanceDays: (userId, date) => {
+        return new Promise((resolve, reject) => {
+            models.AttendanceDay.findAll({
+                where: {
+                    date: date,
+                    user_aad_object_id: userId
+                },
+                raw: true
+            }).then(function (attendanceDays) {
+                if (!attendanceDays || attendanceDays.length == 0) {
+                    return reject();
+                }
+
+                let attendanceDay = attendanceDays[0];
+                models.AttendanceLog.findAll({
+                    where: {
+                        attendance_day_id: attendanceDay.id
+                    },
+                    raw: true
+                }).then(function (attendanceLogs) {
+                    // TODO: fix this. How to change sequelize to plain object
+                    attendanceDay = attendanceDay.toJSON();
+                    attendanceDay.attendanceLogs = attendanceLogs;
+                    // send the whole list
+                    // fetch the first one which has attendees
+                    resolve(attendanceDay);
+                })
+            })
+                .catch((err) => {
+                    console.error('error finding days', err);
+                });
+        })
+    },
     reset: () => {
         return new Promise((resolve, reject) => {
             models.AttendanceDay.destroy({ truncate: true })

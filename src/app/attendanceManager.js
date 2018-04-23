@@ -1,17 +1,47 @@
 const storageManager = require('./storageManager')
 const dateFormat = require('dateformat')
 const resources = require('./resources')
+const builder = require('botbuilder')
 
 module.exports = {
     bot: null,
     connector: null,
+    isSupportedCommand: function (command) {
+        return this.getSupportedCommands().reduce((isSupported, currentCmd) => command.includes(currentCmd) || isSupported, false)
+    },
     getSupportedCommands: function () {
-        return ['start attendance call'];
+        return [
+            'start attendance call',
+            'show attendees'
+        ];
+    },
+    handleCommand: function (session, text) {
+        let supportedCommands = this.getSupportedCommands();
+        if (text.includes(supportedCommands[0])) {
+            return this.handleAttendanceCall(session, text);
+        } else if (text.includes(supportedCommands[1])) {
+            return this.showAttendees(session, text);
+        }
+    },
+    showAttendees: async function (session, text) {
+        // find for today in available channels
+        let today = new Date();
+        let date = dateFormat(today, 'isoDate');
+        let dateForDisplay = dateFormat(today, 'd mmm');
+        // TODO: shows the first attendee list by default
+        let attendanceDays = await storageManager.findAttendanceDays(session.message.user.aadObjectId, date).catch(this.onError);
+        if (!attendanceDays) {
+            session.send(resources.noAttendanceCallsForTheDay, dateForDisplay);
+            return;
+        }
+
+        let attendanceDay = attendanceDays;
+        session.send(this.getStatusCardMessage(session, attendanceDay));
     },
     handleAttendanceCall: async function (session, text) {
         var now = new Date();
         var attendanceDay = await storageManager.storeAttendanceDay(dateFormat(now, 'isoDate'), session.message)
-            .catch((err) => { /* ignore error */ });;
+            .catch((err) => { /* ignore error */ });
 
         if (!attendanceDay) {
             session.send(resources.attendanceStartedAlready);
@@ -102,5 +132,30 @@ module.exports = {
                         })
                     }
                 ]))
+    },
+    getStatusCardMessage: function (session, attendanceDay) {
+        const attendanceCount = attendanceDay.attendanceLogs.length;
+        const mapManager = require('./mapManager')
+        const imageUrl = mapManager.getMapUrl(attendanceDay.attendanceLogs);
+        console.log(imageUrl);
+        return new builder.Message(session)
+            .addAttachment(new builder.HeroCard(session)
+                .title(dateFormat(attendanceDay.date, "ddd, mmm dS, yyyy") + ' Attendance')
+                .text(attendanceCount + " students have marked their attendance")
+                //.text(attendanceStatus)
+                .images([builder.CardImage.create(session, imageUrl)])
+                .buttons([
+                    {
+                        title: "Show Attendee Names",
+                        type: 'invoke',
+                        value: JSON.stringify({
+                            action: "showAttendeeNames",
+                            attendance_day_id: attendanceDay.id
+                        })
+                    }
+                ]))
+    },
+    onError: function (error) {
+        console.error('Error in promise: ', error);
     }
 }

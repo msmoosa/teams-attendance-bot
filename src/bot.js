@@ -1,5 +1,5 @@
 'use strict';
-
+const resources = require('./app/resources')
 module.exports.setup = function (app) {
     var builder = require('botbuilder');
     var teams = require('botbuilder-teams');
@@ -20,10 +20,11 @@ module.exports.setup = function (app) {
     var bot = new builder.UniversalBot(connector, function (session) {
         // Message might contain @mentions which we would like to strip off in the response
         var text = teams.TeamsMessage.getTextWithoutMentions(session.message);
-        if (text.includes('start attendance call')) {
-            attendanceManager.handleAttendanceCall(session, text);
+        console.log('[MessageReceived]', text);
+        if (attendanceManager.isSupportedCommand(text)) {
+            attendanceManager.handleCommand(session, text);
         } else {
-            session.send('Yeh humse na ho paaega :P\nTry one of these\n%s', attendanceManager.getSupportedCommands().join("\n"));
+            session.send(resources.unknownCommand, attendanceManager.getSupportedCommands().map(cmd => "👉 " + cmd + "<br>"));
         }
     });
 
