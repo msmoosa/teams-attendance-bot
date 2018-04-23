@@ -9,3 +9,8 @@ This project is forked off the ms-teams-hello-world nodejs sample. It uses the f
 * nodemon to auto restart server on file changes
 * sequelize for database storage (uses sqlite as db provider)
 * uuid to create unique ids
+
+Run the app 
+```
+npm start
+```
