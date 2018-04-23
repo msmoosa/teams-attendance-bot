@@ -6,7 +6,7 @@ module.exports = {
             return 'https://i.imgur.com/2FjmDkz.png';
         }
 
-        return 'https://maps.googleapis.com/maps/api/staticmap?center=' + this.getPair(locations[0]) + '&zoom=13&size=400x400' +
+        return 'https://maps.googleapis.com/maps/api/staticmap?center=' + this.getPair(locations[0]) + '&zoom=13&size=800x800' +
             '&markers=' + locations.reduce((markers, location) => markers + '|' + this.getPair(location), '') +
             '&key=AIzaSyAigIP1uFVRZYSxwStIZ6JjoWJtGE0pCK8';
     },

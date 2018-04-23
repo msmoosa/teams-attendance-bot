@@ -59,6 +59,8 @@ module.exports = {
         this.bot = bot;
         if (action === 'markAttendance') {
             this.markAttendance(message);
+        } else if (action === 'showAttendeeNames') {
+            this.showAttendeeNames(message);
         } else {
             console.error('Unknown action ' + action);
         }
@@ -78,6 +80,13 @@ module.exports = {
         var activityId = await storageManager.getActivityId(attendanceInfo.date, attendanceInfo.channelId, attendanceLog)
         // update card
         this.sendCardUpdate(message, activityId, attendanceLog);
+    },
+    showAttendeeNames: async function (message) {
+        let attendanceDayId = message.value.attendance_day_id;
+        let attendees = await storageManager.getAttendees(attendanceDayId);
+        let session = await this.loadSessionAsync(message);
+
+        session.send(this.getAttendeesCardMessage(session, attendees))
     },
     sendCardUpdate: async function (invokeMessage, activityId, attendanceLog) {
         // retrieve current total
@@ -137,7 +146,6 @@ module.exports = {
         const attendanceCount = attendanceDay.attendanceLogs.length;
         const mapManager = require('./mapManager')
         const imageUrl = mapManager.getMapUrl(attendanceDay.attendanceLogs);
-        console.log(imageUrl);
         return new builder.Message(session)
             .addAttachment(new builder.HeroCard(session)
                 .title(dateFormat(attendanceDay.date, "ddd, mmm dS, yyyy") + ' Attendance')
@@ -154,6 +162,28 @@ module.exports = {
                         })
                     }
                 ]))
+    },
+    getAttendeesCardMessage: function (session, attendees) {
+        const attendanceCount = attendees.length;
+        const mapManager = require('./mapManager')
+        const imageUrl = mapManager.getMapUrl(attendees);
+        console.log(imageUrl);
+        return new builder.Message(session)
+            .addAttachment(new builder.HeroCard(session)
+                .title('Attendees')
+                .subtitle(attendanceCount + " students have marked their attendance")
+                .text(this.getAttendeesHtml(attendees))
+                .images([builder.CardImage.create(session, imageUrl)])
+            )
+    },
+    getAttendeesHtml: function (attendees) {
+        var html = '<ul>';
+        html += attendees.reduce((html, attendee) =>
+            html += '<li><b>' + attendee.user_name + '</b>' +
+            ' (' + attendee.lat.toFixed(2) + ',' + attendee.lng.toFixed(2) + ')' +
+            '</li>', '');
+        html += '</ul>';
+        return html;
     },
     onError: function (error) {
         console.error('Error in promise: ', error);

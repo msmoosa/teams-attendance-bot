@@ -38,6 +38,10 @@ module.exports = {
                     channel_id: attendanceInfo.channelId
                 }
             }).then((attendanceDay) => {
+                if (attendanceDay == null) {
+                    reject('No matching day');
+                }
+
                 models.AttendanceLog.create({
                     id: uuid(),
                     user_id: attendanceInfo.userId,
@@ -92,10 +96,8 @@ module.exports = {
                     },
                     raw: true
                 }).then(function (attendanceLogs) {
-                    // TODO: fix this. How to change sequelize to plain object
                     attendanceDay = attendanceDay.toJSON();
                     attendanceDay.attendanceLogs = attendanceLogs;
-                    // send the whole list
                     // fetch the first one which has attendees
                     resolve(attendanceDay);
                 })
@@ -103,6 +105,18 @@ module.exports = {
                 .catch((err) => {
                     console.error('error finding days', err);
                 });
+        })
+    },
+    getAttendees: (attendanceDayId) => {
+        return new Promise((resolve, reject) => {
+            models.AttendanceLog.findAll({
+                where: {
+                    attendance_day_id: attendanceDayId
+                },
+                raw: true
+            }).then(function (attendanceLogs) {
+                resolve(attendanceLogs);
+            })
         })
     },
     reset: () => {
