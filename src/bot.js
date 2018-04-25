@@ -1,5 +1,6 @@
 'use strict';
 const resources = require('./app/resources')
+const adaptiveCardManager = require('./app/adaptiveCardManager')
 module.exports.setup = function (app) {
     var builder = require('botbuilder');
     var teams = require('botbuilder-teams');
@@ -23,6 +24,8 @@ module.exports.setup = function (app) {
         console.log('[MessageReceived]', text);
         if (attendanceManager.isSupportedCommand(text)) {
             attendanceManager.handleCommand(session, text);
+        } else if (adaptiveCardManager.isSupportedCommand(text)) {
+            adaptiveCardManager.handleCommand(session, text);
         } else {
             session.send(resources.unknownCommand, attendanceManager.getSupportedCommands().map(cmd => "👉 " + cmd + "<br>"));
         }

@@ -95,6 +95,7 @@ module.exports = {
         // recreate message
         let session = await this.loadSessionAsync(invokeMessage);
         var updatedMessage = this.getAttendanceCardMessage(session, new Date(invokeMessage.value.date), totalAttendees);
+        updatedMessage.attachments = []
         var address = invokeMessage.address;
         address.id = activityId;
         updatedMessage.address(address);
@@ -116,52 +117,177 @@ module.exports = {
             });
         });
     },
+    isAdaptiveCardEnabled: function () {
+        return true;
+    },
     getAttendanceCardMessage: function (session, date, attendanceCount) {
         const builder = require('botbuilder')
         const dateFormat = require('dateformat');
         const attendanceStatus = attendanceCount === 0 ?
             "No one has marked their attendance yet"
             : attendanceCount + " student" + (attendanceCount > 1 ? "s" : '') + " marked their attendance";
-        return new builder.Message(session)
-            .addAttachment(new builder.ThumbnailCard(session)
-                .title(dateFormat(date, "ddd, mmm dS, yyyy") + ' Attendance')
-                .subtitle("Mark your attendance")
+        const title = dateFormat(date, "ddd, mmm dS, yyyy") + ' Attendance';
+        const subtitle = "Mark your attendance";
+        const imageUrl = 'https://i.imgur.com/2FjmDkz.png';
+        const value = {
+            action: "markAttendance",
+            extras: ["location"],
+            date: dateFormat(date, 'isoDate'),
+            lat: 28,
+            lng: 77
+        };
+
+        let card;
+        if (this.isAdaptiveCardEnabled()) {
+            card = {
+                'contentType': 'application/vnd.microsoft.card.adaptive',
+                "content": {
+
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.0",
+                    "body": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": 1,
+                                    "items": [
+                                        {
+                                            "type": "Image",
+                                            "url": imageUrl,
+                                            "size": "auto"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "width": 2,
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": title,
+                                            "weight": "bolder",
+                                            "size": "extraLarge",
+                                            "spacing": "none",
+                                            "wrap": true
+                                        },
+                                        {
+                                            "type": "TextBlock",
+                                            "text": "Mark your attendance",
+                                            "wrap": true,
+                                            "isSubtle": true,
+                                            "spacing": "none"
+                                        },
+                                        {
+                                            "type": "TextBlock",
+                                            "text": attendanceStatus,
+                                            "size": "small",
+                                            "wrap": true
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.Submit",
+                            "title": "Mark Attendance",
+                            "data": value
+                        }
+                    ]
+                }
+            }
+        } else {
+            card = new builder.ThumbnailCard(session)
+                .title(title)
+                .subtitle(subtitle)
                 .text(attendanceStatus)
-                .images([builder.CardImage.create(session, 'https://i.imgur.com/2FjmDkz.png')])
+                .images([builder.CardImage.create(session, imageUrl)])
                 .buttons([
                     {
                         title: "Mark Attendance",
                         type: 'invoke',
-                        value: JSON.stringify({
-                            action: "markAttendance",
-                            extras: ["location"],
-                            date: dateFormat(date, 'isoDate'),
-                            lat: 28,
-                            lng: 77
-                        })
+                        data: value
                     }
-                ]))
+                ]);
+        }
+
+        return new builder.Message(session)
+            .addAttachment(card)
     },
     getStatusCardMessage: function (session, attendanceDay) {
         const attendanceCount = attendanceDay.attendanceLogs.length;
+        const title = dateFormat(attendanceDay.date, "ddd, mmm dS, yyyy") + ' Attendance';
         const mapManager = require('./mapManager')
         const imageUrl = mapManager.getMapUrl(attendanceDay.attendanceLogs);
-        return new builder.Message(session)
-            .addAttachment(new builder.HeroCard(session)
-                .title(dateFormat(attendanceDay.date, "ddd, mmm dS, yyyy") + ' Attendance')
-                .text(attendanceCount + " students have marked their attendance")
-                //.text(attendanceStatus)
+        let attendanceStatus = attendanceCount + " students have marked their attendance";
+        const value = {
+            action: "showAttendeeNames",
+            attendance_day_id: attendanceDay.id
+        };
+
+        let card;
+        if (this.isAdaptiveCardEnabled()) {
+            card = {
+                'contentType': 'application/vnd.microsoft.card.adaptive',
+                "content": {
+
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.0",
+                    "body": [
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                    "type": "Image",
+                                    "url": imageUrl,
+                                    "size": "auto"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": title,
+                                    "weight": "bolder",
+                                    "size": "Medium",
+                                    "spacing": "none",
+                                    "wrap": true
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": attendanceStatus,
+                                    "size": "small",
+                                    "wrap": true
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.Submit",
+                            "title": resources.showAttendeeNames,
+                            "data": value
+                        }
+                    ]
+                }
+            };
+        } else {
+            card = new builder.HeroCard(session)
+                .title(title)
+                .text(attendanceStatus)
                 .images([builder.CardImage.create(session, imageUrl)])
                 .buttons([
                     {
-                        title: "Show Attendee Names",
+                        title: resources.showAttendeeNames,
                         type: 'invoke',
-                        value: JSON.stringify({
-                            action: "showAttendeeNames",
-                            attendance_day_id: attendanceDay.id
-                        })
+                        value: JSON.stringify(value)
                     }
-                ]))
+                ])
+        }
+        return new builder.Message(session)
+            .addAttachment(card)
     },
     getAttendeesCardMessage: function (session, attendees) {
         const attendanceCount = attendees.length;
