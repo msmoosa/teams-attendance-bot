@@ -1,7 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
     var AttendanceLog = sequelize.define('AttendanceLog', {
-        id: DataTypes.STRING,
+        id: { type: DataTypes.STRING, primaryKey: true },
         user_id: DataTypes.STRING,
         user_name: DataTypes.STRING,
         lat: DataTypes.DECIMAL,

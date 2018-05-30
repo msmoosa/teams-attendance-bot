@@ -53,7 +53,7 @@ module.exports = {
             storageManager.updateAttendanceDay(attendanceDay.id, addresses[0].id)
         });
     },
-    onInvoke: function (connector, bot, message) {
+    onInvoke: async function (connector, bot, message) {
         var action = message.value.action;
         this.connector = connector;
         this.bot = bot;
@@ -62,7 +62,8 @@ module.exports = {
         } else if (action === 'showAttendeeNames') {
             this.showAttendeeNames(message);
         } else {
-            console.error('Unknown action ' + action);
+            let session = await this.loadSessionAsync(message);
+            session.send('Unknown action ' + action + ' message:' + JSON.stringify(message));
         }
     },
     markAttendance: async function (message) {

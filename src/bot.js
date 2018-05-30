@@ -22,7 +22,9 @@ module.exports.setup = function (app) {
         // Message might contain @mentions which we would like to strip off in the response
         var text = teams.TeamsMessage.getTextWithoutMentions(session.message);
         console.log('[MessageReceived]', text);
-        if (attendanceManager.isSupportedCommand(text)) {
+        if (text.trim() == '') {
+            session.send('Empty message received');
+        } else if (attendanceManager.isSupportedCommand(text)) {
             attendanceManager.handleCommand(session, text);
         } else if (adaptiveCardManager.isSupportedCommand(text)) {
             adaptiveCardManager.handleCommand(session, text);

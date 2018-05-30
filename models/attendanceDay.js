@@ -1,7 +1,7 @@
 const uuid = require('uuid')
 module.exports = (sequelize, DataTypes) => {
     var AttendanceDay = sequelize.define('AttendanceDay', {
-        id: { type: DataTypes.STRING, unique: true },
+        id: { type: DataTypes.STRING, unique: true, primaryKey: true },
         date: { type: DataTypes.STRING, unique: 'daily_unique' },
         channel_id: { type: DataTypes.STRING, unique: 'daily_unique' },
         user_id: { type: DataTypes.STRING, unique: 'daily_unique' },

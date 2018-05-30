@@ -25,7 +25,7 @@
     "faker": "^4.1.0",
     "nodemon": "^1.17.3",
     "pug": "^2.0.0-rc.4",
-    "sequelize": "4.37.6",
+    "sequelize": "^4.37.6",
     "sequelize-cli": "^4.0.0",
     "sqlite3": "^4.0.0",
     "uuid": "^3.2.1"
